@@ -1,26 +1,67 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { UserService } from '../user/user.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserDto } from '../user/dto/user.dto';
+import { User } from '../user/entities/user.entity';
+import * as bcrypt from 'bcrypt';
+import { Payload } from './security/payload.interface';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async join(userDto: UserDto): Promise<User> {
+    const findUser = await this.userService.findByUsername(userDto.username);
+    if (findUser) throw new ConflictException('User already exists');
+
+    userDto.password = await this.encryptPassword(userDto.password);
+    return await this.userService.save(userDto);
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async validateUser(
+    userDto: UserDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const findUser = await this.userService.findByUsername(userDto.username);
+    const isVaildate = bcrypt.compareSync(userDto.password, findUser.password);
+
+    if (!findUser || !isVaildate)
+      throw new UnauthorizedException('ID or password is not match');
+
+    const payload: Payload = { id: findUser.id, username: findUser.username };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      refreshToken: await this.generateRefreshToken(findUser),
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
+  async generateRefreshToken(user: User): Promise<string> {
+    const payload = { id: user.id, username: user.username };
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+      expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
+    });
   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
+  async validateRefreshToken(token: string): Promise<Payload> {
+    try {
+      return this.jwtService.verify(token, {
+        secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+      });
+    } catch (e) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  private async encryptPassword(password: string): Promise<string> {
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    return encryptedPassword;
   }
 }
