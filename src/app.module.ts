@@ -1,6 +1,10 @@
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
+import { User } from './user/entities/user.entity';
+import { Auth } from './auth/entities/auth.entity';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -12,11 +16,13 @@ import { Module } from '@nestjs/common';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      models: [],
+      models: [User, Auth],
       autoLoadModels: true,
       synchronize: true,
       timezone: '+09:00',
     }),
+    UserModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
