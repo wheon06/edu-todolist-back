@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Todo } from './entities/todo.entity';
 import { Repository } from 'sequelize-typescript';
-import { AuthService } from 'src/auth/auth.service';
 import { TodoDto } from './dto/todo.dto';
 
 @Injectable()
@@ -10,7 +9,6 @@ export class TodoService {
   constructor(
     @InjectModel(Todo)
     private readonly todoRepository: Repository<Todo>,
-    private readonly authService: AuthService,
   ) {}
 
   async findAll(): Promise<Todo[]> {
@@ -23,5 +21,17 @@ export class TodoService {
       isChecked: todoDto.isChecked,
       userId: todoDto.user.id,
     });
+  }
+
+  async updateIsChecked(
+    id: string,
+    isChecked: boolean,
+    user: any,
+  ): Promise<Todo> {
+    await this.todoRepository.update(
+      { isChecked },
+      { where: { id, userId: user.id } },
+    );
+    return this.todoRepository.findOne({ where: { id, userId: user.id } });
   }
 }
