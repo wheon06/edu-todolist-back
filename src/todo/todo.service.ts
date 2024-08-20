@@ -24,7 +24,7 @@ export class TodoService {
   }
 
   async updateIsChecked(
-    id: string,
+    id: number,
     isChecked: boolean,
     user: any,
   ): Promise<Todo> {
@@ -33,5 +33,17 @@ export class TodoService {
       { where: { id, userId: user.id } },
     );
     return this.todoRepository.findOne({ where: { id, userId: user.id } });
+  }
+
+  async updateContent(id: number, content: string, user: any): Promise<Todo> {
+    await this.todoRepository.update(
+      { content },
+      { where: { id, userId: user.id } },
+    );
+    return this.todoRepository.findOne({ where: { id, userId: user.id } });
+  }
+
+  async deleteTodo(id: number, user: any) {
+    await this.todoRepository.destroy({ where: { id, userId: user.id } });
   }
 }
