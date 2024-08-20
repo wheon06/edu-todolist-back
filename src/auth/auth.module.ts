@@ -6,12 +6,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { User } from 'src/user/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './security/passport.jwt.strategy';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([User]),
     JwtModule.registerAsync({
       inject: [ConfigService],
+      global: true,
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_ACCESS_TOKEN_SECRET'),
         signOptions: {
@@ -21,6 +24,7 @@ import { ConfigService } from '@nestjs/config';
     }),
     JwtModule.registerAsync({
       inject: [ConfigService],
+      global: true,
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_REFRESH_TOKEN_SECRET'),
         signOptions: {
@@ -28,9 +32,10 @@ import { ConfigService } from '@nestjs/config';
         },
       }),
     }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService],
+  providers: [AuthService, UserService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

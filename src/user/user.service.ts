@@ -18,6 +18,10 @@ export class UserService {
     });
   }
 
+  async findById(id: number): Promise<User> {
+    return this.userRepository.findOne({ where: { id: id } });
+  }
+
   async findByUsername(username: string): Promise<User> {
     return this.userRepository.findOne({ where: { username: username } });
   }

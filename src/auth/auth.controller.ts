@@ -1,7 +1,16 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { UserDto } from 'src/user/dto/user.dto';
+import { RefreshTokenGuard } from './security/refresh.token.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -17,5 +26,29 @@ export class AuthController {
     const jwt = await this.authService.validateUser(userDto);
     res.setHeader('Authorization', 'Bearer ' + jwt.accessToken);
     return res.json(jwt);
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Body('refreshToken') refreshToken: string,
+    @Res() res: Response,
+  ) {
+    try {
+      const { accessToken } =
+        await this.authService.refreshAccessToken(refreshToken);
+      return res.json({ accessToken });
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+  }
+
+  @Post('refresh')
+  @UseGuards(RefreshTokenGuard)
+  async refreshAccessToken(
+    @Req() req: Request,
+  ): Promise<{ accessToken: string }> {
+    const user: any = req.user;
+    const accessToken = await this.authService.generateAccessToken(user);
+    return { accessToken };
   }
 }
