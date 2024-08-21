@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { UserDto } from 'src/user/dto/user.dto';
 import { RefreshTokenGuard } from './security/refresh.token.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -50,5 +51,12 @@ export class AuthController {
     const user: any = req.user;
     const accessToken = await this.authService.generateAccessToken(user);
     return { accessToken };
+  }
+
+  @Get('userInfo')
+  @UseGuards(AuthGuard())
+  async authenticate(@Req() req: Request): Promise<any> {
+    const user: any = req.user;
+    return user;
   }
 }

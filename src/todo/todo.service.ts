@@ -12,11 +12,11 @@ export class TodoService {
   ) {}
 
   async findAll(): Promise<Todo[]> {
-    return this.todoRepository.findAll();
+    return await this.todoRepository.findAll();
   }
 
   async save(todoDto: TodoDto): Promise<Todo> {
-    return this.todoRepository.create({
+    return await this.todoRepository.create({
       content: todoDto.content,
       isChecked: todoDto.isChecked,
       userId: todoDto.user.id,
@@ -32,7 +32,10 @@ export class TodoService {
       { isChecked },
       { where: { id, userId: user.id } },
     );
-    return this.todoRepository.findOne({ where: { id, userId: user.id } });
+
+    return await this.todoRepository.findOne({
+      where: { id, userId: user.id },
+    });
   }
 
   async updateContent(id: number, content: string, user: any): Promise<Todo> {
@@ -40,10 +43,15 @@ export class TodoService {
       { content },
       { where: { id, userId: user.id } },
     );
-    return this.todoRepository.findOne({ where: { id, userId: user.id } });
+
+    return await this.todoRepository.findOne({
+      where: { id, userId: user.id },
+    });
   }
 
   async deleteTodo(id: number, user: any) {
-    await this.todoRepository.destroy({ where: { id, userId: user.id } });
+    return await this.todoRepository.destroy({
+      where: { id, userId: user.id },
+    });
   }
 }
